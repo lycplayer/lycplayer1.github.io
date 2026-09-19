@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>博客中心</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif;}
+        body{background:#f0f0f0;transition:opacity 0.3s ease;}
+        .header{background:#fff;padding:15px 30px;display:flex;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+        .logo{font-size:18px;font-weight:bold;color:#409eff;cursor:pointer;}
+        .nav{margin-left:40px;display:flex;gap:25px;}
+        .nav a{text-decoration:none;color:#333;font-size:14px;cursor:pointer;}
+        .nav a.active{color:#409eff;font-weight:bold;}
+        .user{margin-left:auto;font-weight:bold;color:#333;display:flex;align-items:center;gap:12px;}
+        .logout-btn{color:#f56c6c;font-size:14px;cursor:pointer;text-decoration:underline;}
+        .main{display:flex;padding:25px;gap:20px;flex-wrap:wrap;}
+        .sidebar{width:200px;background:#fff;padding:20px;border-radius:8px;}
+        .sidebar h3{margin-bottom:15px;font-size:16px;}
+        .sidebar a{display:block;padding:8px 0;color:#333;text-decoration:none;font-size:14px;cursor:pointer;}
+        .content{flex:1;background:#fff;padding:25px;border-radius:8px;min-width:300px;}
+
+        .blog-item{
+            display:flex;
+            gap:20px;
+            border-bottom:1px solid #eee;
+            padding:12px 0;
+            margin-bottom:10px;
+            align-items:flex-start;
+        }
+        .blog-left{
+            flex:2;
+            min-width:250px;
+        }
+        .blog-right{
+            flex:1;
+            min-width:200px;
+            background:#f9f9f9;
+            border-radius:6px;
+            padding:10px;
+            font-size:12px;
+            max-height:220px;
+            overflow-y:auto;
+        }
+
+        .blog-title{
+            font-size:16px;
+            font-weight:bold;
+            color:#333;
+            margin-bottom:5px;
+        }
+        .blog-info{
+            font-size:12px;
+            color:#999;
+            margin-bottom:8px;
+        }
+        .blog-content{
+            font-size:14px;
+            line-height:1.6;
+            color:#555;
+            margin-bottom:8px;
+        }
+        .like-area{
+            display:flex;
+            align-items:center;
+            font-size:12px;
+            color:#666;
+            gap:8px;
+            padding-top:4px;
+        }
+        .like-btn{
+            color:#09BB07;
+            cursor:pointer;
+            display:flex;align-items:center;gap:4px;
+        }
+        .like-users{color:#666;}
+        .detail-btn{
+            color:#409eff;
+            font-size:12px;
+            cursor:pointer;
+            margin-left:auto;
+        }
+        .del-btn{
+            color:#f56c6c;
+            font-size:12px;
+            cursor:pointer;
+            margin-left:5px;
+        }
+
+        .comment-title{
+            font-weight:bold;
+            margin-bottom:6px;
+            color:#666;
+            display:flex;
+            justify-content:space-between;
+        }
+        .blog-comment-item{
+            padding:4px 0;
+            border-bottom:1px dashed #eee;
+            margin-bottom:4px;
+        }
+        .blog-comment-user{
+            color:#409eff;
+            font-weight:bold;
+        }
+        .blog-comment-content{
+            color:#333;
+            line-height:1.4;
+        }
+        .blog-comment-time{
+            color:#999;
+            font-size:10px;
+            margin-top:2px;
+        }
+
+        .blog-form{margin-bottom:30px;}
+        .blog-form input,.blog-form textarea{
+            width:100%;padding:10px;
+            border:1px solid #ddd;border-radius:4px;
+            margin-bottom:10px;font-size:14px;
+        }
+        .blog-form textarea{min-height:120px;resize:vertical;}
+        .blog-form button{
+            padding:8px 16px;background:#409eff;
+            color:#fff;border:none;border-radius:4px;cursor:pointer;
+        }
+        .modal{
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;
+            z-index:9999;
+        }
+        .modal-content{
+            background:#fff;width:90%;max-width:500px;
+            padding:20px;border-radius:8px;max-height:80vh;overflow-y:auto;
+        }
+        .modal-title{font-size:18px;font-weight:bold;margin-bottom:10px;}
+        .modal-info{font-size:12px;color:#999;margin-bottom:15px;}
+        .modal-body{
+            font-size:14px;line-height:1.7;margin-bottom:15px;
+            white-space:pre-wrap;
+        }
+        .modal-close{
+            background:#409eff;color:#fff;border:none;
+            padding:6px 12px;border-radius:4px;cursor:pointer;
+        }
+        .comment-input{
+            width:100%;padding:6px;margin-top:10px;
+            border:1px solid #ddd;border-radius:4px;
+        }
+
+        /* 管理员面板样式 */
+        .admin-modal{
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;
+            z-index:99999;display:none;
+        }
+        .admin-box{
+            background:#fff;width:500px;max-width:90%;padding:25px;border-radius:10px;
+            max-height:80vh;overflow-y:auto;
+        }
+        .admin-box h2{
+            color:#e74c3c;margin-bottom:15px;text-align:center;
+        }
+        .admin-item{
+            padding:10px;border-bottom:1px solid #eee;
+        }
+        .admin-title{font-weight:bold;margin-bottom:5px;}
+        .admin-user{color:#666;font-size:12px;margin-bottom:5px;}
+        .admin-btn{
+            padding:5px 10px;background:#e74c3c;color:#fff;
+            border:none;border-radius:4px;cursor:pointer;margin-top:5px;
+        }
+        .admin-close{
+            background:#409eff;margin-top:15px;width:100%;padding:8px;
+            color:#fff;border:none;border-radius:4px;cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="go('index.html')">信息科技课堂平台</div>
+        <div class="nav">
+            <a class="active">博客中心</a>
+            <a onclick="checkNav('disk.html')">网盘</a>
+            <a onclick="checkNav('qa.html')">爱问知识库</a>
+            <a onclick="go('about.html')">关于</a>
+        </div>
+        <div class="user">
+            <!-- 管理员点击这里触发 -->
+            <span id="currentUser" onclick="openAdminPanel()"></span>
+            <span class="logout-btn" onclick="logout()" id="logoutBtn" style="display:none;">退出</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <h3>博客中心</h3>
+            <a onclick="showList()">全部博客</a>
+            <a onclick="showMyBlog()">我的博客</a>
+            <a onclick="showPost()">发布博客</a>
+        </div>
+        <div class="content" id="contentArea">
+            <h3>博客加载中...</h3>
+        </div>
+    </div>
+
+    <div id="modal" style="display:none;"></div>
+
+    <!-- 管理员面板 -->
+    <div id="adminPanel" class="admin-modal">
+        <div class="admin-box">
+            <h2>🔧 管理员后台 - 可删除任意内容</h2>
+            <div id="adminContent"></div>
+            <button class="admin-close" onclick="closeAdminPanel()">关闭面板</button>
+        </div>
+    </div>
+
+<script>
+window.onload=function(){
+    let user = localStorage.getItem("loginUser");
+    let guest = localStorage.getItem("guestMode");
+    let showText = "未登录";
+    if(guest){ showText = "游客"; }
+    else if(user){ showText = user; }
+    document.getElementById("currentUser").innerText = "用户：" + showText;
+    if(user || guest){ document.getElementById("logoutBtn").style.display = "inline"; }
+    showList();
+}
+
+// ========== 【管理员功能】点击用户名打开面板 ==========
+function openAdminPanel(){
+    let loginUser = localStorage.getItem("loginUser");
+    if(loginUser !== "admin"){
+        return; // 非管理员不响应
+    }
+
+    fetch("blog_list.php")
+    .then(r=>r.json())
+    .then(list=>{
+        let html = "";
+        list.forEach((b, blogIndex)=>{
+            html += `
+            <div class="admin-item">
+                <div class="admin-title">博客：${b.title}</div>
+                <div class="admin-user">作者：${b.user}</div>
+                <button class="admin-btn" onclick="adminDeleteBlog(${blogIndex})">删除此博客</button>
+            `;
+
+            // 显示所有评论 + 删除按钮
+            if(b.comments && b.comments.length>0){
+                b.comments.forEach((c, commentIndex)=>{
+                    html += `
+                    <div style="padding-left:10px;margin-top:8px;font-size:12px;border-left:2px solid #eee;">
+                        <div><b>${c.user}</b>：${c.content}</div>
+                        <button class="admin-btn" style="padding:3px 6px;font-size:12px;"
+                            onclick="adminDeleteComment(${blogIndex}, ${commentIndex})">删除此评论</button>
+                    </div>`;
+                });
+            }
+            html += `</div>`;
+        });
+        document.getElementById("adminContent").innerHTML = html;
+        document.getElementById("adminPanel").style.display = "flex";
+    });
+}
+
+function closeAdminPanel(){
+    document.getElementById("adminPanel").style.display = "none";
+    showList();
+}
+
+// 管理员删除博客
+function adminDeleteBlog(blogIndex){
+    if(!confirm("确定删除此博客？")) return;
+    fetch("blog_delete.php",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`index=${blogIndex}`
+    }).then(()=>{
+        alert("删除成功");
+        openAdminPanel();
+    });
+}
+
+// 管理员删除评论
+function adminDeleteComment(blogIndex, commentIndex){
+    if(!confirm("确定删除此评论？")) return;
+    fetch("blog_comment_delete.php",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`blogIndex=${blogIndex}&commentIndex=${commentIndex}`
+    }).then(()=>{
+        alert("评论删除成功");
+        openAdminPanel();
+    });
+}
+
+// ========== 原有功能不变 ==========
+function checkNav(url){
+    let user = localStorage.getItem("loginUser");
+    let guest = localStorage.getItem("guestMode");
+    if(user || guest){ go(url); return; }
+    if(confirm("您还未登录，是否前往登录？")){ go("login.html");
+    }else{
+        if(confirm("使用游客模式浏览更佳，是否开启？")){
+            localStorage.setItem("guestMode","true"); go(url);
+        }else{ alert("ok"); go("login.html"); }
+    }
+}
+
+function logout(){
+    if(confirm("是否退出？")){
+        localStorage.removeItem("loginUser");
+        localStorage.removeItem("guestMode");
+        go("login.html");
+    }
+}
+
+function go(url){
+    document.body.style.opacity=0;
+    setTimeout(()=>{location.href=url},300);
+}
+
+function showList(){
+    let c = document.getElementById("contentArea");
+    c.innerHTML = "<h3>全部博客</h3><div id='blogList' style='margin-top:15px;'>加载中...</div>";
+    fetch("blog_list.php")
+    .then(r=>r.json())
+    .then(list=>{
+        if(list.length === 0){ document.getElementById("blogList").innerHTML = "暂无博客"; return; }
+        let html = "";
+        let me = localStorage.getItem("loginUser") || "游客";
+        list.forEach((b,index)=>{
+            let likes = b.likes || [];
+            let liked = likes.includes(me);
+            let likeText = likes.length > 0 ? likes.join("、") : "";
+            let comments = b.comments || [];
+
+            let commentHtml = "";
+            comments.forEach(com=>{
+                commentHtml += `
+                <div class="blog-comment-item">
+                    <div class="blog-comment-user">${com.user}</div>
+                    <div class="blog-comment-content">${com.content}</div>
+                    <div class="blog-comment-time">${com.time}</div>
+                </div>`;
+            });
+
+            html += `
+            <div class="blog-item">
+                <div class="blog-left">
+                    <div class="blog-title">${b.title}</div>
+                    <div class="blog-info">作者：${b.user} | ${b.time}</div>
+                    <div class="blog-content">${b.content.length>50?b.content.substring(0,50)+"...":b.content}</div>
+                    <div class="like-area">
+                        <div class="like-btn" onclick="likeBlog(${index})">${liked ? "❤️ 已点赞" : "🤍 点赞"}</div>
+                        ${likeText ? `<div class="like-users">${likeText}</div>` : ""}
+                        <div class="detail-btn" onclick="showDetail(${index})">详情</div>
+                    </div>
+                </div>
+
+                <div class="blog-right">
+                    <div class="comment-title">
+                        <span>评论 (${comments.length})</span>
+                    </div>
+                    ${commentHtml || '<div style="color:#999;">暂无评论</div>'}
+                </div>
+            </div>`;
+        });
+        document.getElementById("blogList").innerHTML = html;
+    });
+}
+
+function showDetail(index){
+    fetch("blog_list.php")
+    .then(r=>r.json())
+    .then(list=>{
+        let b = list[index];
+        let likes = b.likes || [];
+        let comments = b.comments || [];
+        let commentHtml = "";
+        comments.forEach(c=>{
+            commentHtml += `
+            <div class="comment-item">
+                <span class="comment-user">${c.user}</span>
+                <span class="comment-time">${c.time}</span><br>
+                ${c.content}
+            </div>`;
+        });
+
+        let html = `
+        <div class="modal">
+            <div class="modal-content">
+                <div class="modal-title">${b.title}</div>
+                <div class="modal-info">
+                    作者：${b.user} | 发布时间：${b.time}<br>
+                    点赞数：${likes.length} | 点赞：${likes.join("、")||"无"}
+                </div>
+                <div class="modal-body">${b.content}</div>
+                <div style="margin-top:15px;">
+                    <div style="font-weight:bold;margin-bottom:8px;">评论 (${comments.length})</div>
+                    ${commentHtml}
+                    <input class="comment-input" id="commentContent" placeholder="写下你的评论...">
+                    <button style="margin-top:6px;padding:4px 10px;background:#409eff;color:#fff;border:none;border-radius:4px;cursor:pointer;" onclick="postComment(${index})">发表评论</button>
+                </div>
+                <br>
+                <button class="modal-close" onclick="closeModal()">关闭</button>
+            </div>
+        </div>`;
+        document.getElementById("modal").innerHTML = html;
+        document.getElementById("modal").style.display = "block";
+    });
+}
+
+function closeModal(){
+    document.getElementById("modal").style.display = "none";
+    showList();
+}
+
+function showMyBlog(){
+    let c = document.getElementById("contentArea");
+    c.innerHTML = "<h3>我的博客</h3><div id='blogList' style='margin-top:15px;'>加载中...</div>";
+    let me = localStorage.getItem("loginUser") || "游客";
+    fetch("blog_list.php")
+    .then(r=>r.json())
+    .then(list=>{
+        let myList = list.filter(b=>b.user === me);
+        if(myList.length === 0){ document.getElementById("blogList").innerHTML = "你还没有发布博客"; return; }
+        let html = "";
+        myList.forEach((b)=>{
+            let realIndex = list.findIndex(x=>x===b);
+            let comments = b.comments || [];
+            let commentHtml = "";
+            comments.forEach(com=>{
+                commentHtml += `
+                <div class="blog-comment-item">
+                    <div class="blog-comment-user">${com.user}</div>
+                    <div class="blog-comment-content">${com.content}</div>
+                    <div class="blog-comment-time">${com.time}</div>
+                </div>`;
+            });
+
+            html += `
+            <div class="blog-item">
+                <div class="blog-left">
+                    <div class="blog-title">${b.title}</div>
+                    <div class="blog-info">作者：${b.user} | ${b.time}</div>
+                    <div class="blog-content">${b.content.length>50?b.content.substring(0,50)+"...":b.content}</div>
+                    <div class="like-area">
+                        <div class="detail-btn" onclick="showDetail(${realIndex})">详情</div>
+                        <div class="del-btn" onclick="deleteMyBlog(${realIndex})">删除</div>
+                    </div>
+                </div>
+                <div class="blog-right">
+                    <div class="comment-title">评论 (${comments.length})</div>
+                    ${commentHtml || '<div style="color:#999;">暂无评论</div>'}
+                </div>
+            </div>`;
+        });
+        document.getElementById("blogList").innerHTML = html;
+    });
+}
+
+function showPost(){
+    let c = document.getElementById("contentArea");
+    c.innerHTML = `
+    <h3>发布博客</h3>
+    <div class="blog-form" style="margin-top:15px;">
+        <input type="text" id="title" placeholder="请输入博客标题" autocomplete="off">
+        <textarea id="content" placeholder="请输入博客内容"></textarea>
+        <button onclick="postBlog()">发布博客</button>
+    </div>`;
+}
+
+function postBlog(){
+    let user = localStorage.getItem("loginUser") || "游客";
+    let title = document.getElementById("title").value.trim();
+    let content = document.getElementById("content").value.trim();
+    if(!title || !content){ alert("标题和内容不能为空"); return; }
+    fetch("blog_post.php",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`user=${encodeURIComponent(user)}&title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}`
+    }).then(()=>{
+        alert("发布成功！");
+        showList();
+    });
+}
+
+function likeBlog(index){
+    let me = localStorage.getItem("loginUser") || "游客";
+    fetch("blog_like.php",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`index=${index}&user=${encodeURIComponent(me)}`
+    }).then(()=>{ showList(); });
+}
+
+function postComment(index){
+    let user = localStorage.getItem("loginUser") || "游客";
+    let content = document.getElementById("commentContent").value.trim();
+    if(!content){ alert("请输入评论内容"); return; }
+    fetch("blog_comment.php",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`index=${index}&user=${encodeURIComponent(user)}&content=${encodeURIComponent(content)}`
+    }).then(()=>{
+        alert("评论成功");
+        showDetail(index);
+        showList();
+    });
+}
+
+function deleteMyBlog(index){
+    if(!confirm("确定删除这条博客？")) return;
+    fetch("blog_delete.php",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`index=${index}`
+    }).then(()=>{
+        alert("删除成功");
+        showMyBlog();
+    });
+}
+</script>
+</body>
+</html>

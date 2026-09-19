@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif;}
+        body{background:#f0f0f0;transition:opacity 0.3s ease;}
+        .header{background:#fff;padding:15px 30px;display:flex;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+        .logo{font-size:18px;font-weight:bold;color:#409eff;cursor:pointer;}
+        .nav{margin-left:40px;display:flex;gap:25px;}
+        .nav a{text-decoration:none;color:#333;font-size:14px;cursor:pointer;}
+        .nav a.active{color:#409eff;font-weight:bold;}
+        .user{margin-left:auto;font-weight:bold;color:#333;display:flex;align-items:center;gap:12px;}
+        .logout-btn{color:#f56c6c;font-size:14px;cursor:pointer;text-decoration:underline;}
+        .main{display:flex;padding:25px;gap:20px;}
+        .sidebar{width:200px;background:#fff;padding:20px;border-radius:8px;}
+        .sidebar h3{margin-bottom:15px;font-size:16px;}
+        .content{flex:1;background:#fff;padding:25px;border-radius:8px;display:flex;justify-content:center;align-items:center;min-height:500px;}
+        
+        .info-table{width:500px;border-collapse:collapse;background:#fff;}
+        .info-table td{border:1px solid #ddd;padding:12px 15px;font-size:14px;}
+        .info-table td:first-child{background:#f8f9fa;width:120px;font-weight:bold;text-align:center;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="go('index.html')">信息科技课堂平台</div>
+        <div class="nav">
+            <a onclick="checkNav('blog.html')">博客中心</a >
+            <a onclick="checkNav('disk.html')">网盘</a >
+            <a onclick="checkNav('qa.html')">爱问知识库</a >
+            <a class="active">关于</a >
+        </div>
+        <div class="user">
+            <span id="currentUser"></span>
+            <span class="logout-btn" onclick="logout()" id="logoutBtn" style="display:none;">退出</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <h3>关于平台</h3>
+        </div>
+        <div class="content">
+            <table class="info-table">
+                <tr>
+                    <td>作者</td>
+                    <td>刘奕辰</td>
+                </tr>
+                <tr>
+                    <td>系统版本</td>
+                    <td>v2.0.0 bata版</td>
+                </tr>
+                <tr>
+                    <td>制作时间</td>
+                    <td>2026年</td>
+                </tr>
+                <tr>
+                    <td>试点网站</td>
+                    <td>root.xo.je</td>
+                </tr>
+                <tr>
+                    <td>作者邮箱</td>
+                    <td>lycplayer@outlook.com</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+<script>
+window.onload=function(){
+    let user = localStorage.getItem("loginUser");
+    let guest = localStorage.getItem("guestMode");
+    let showText = "未登录";
+    if(guest){
+        showText = "游客";
+    }else if(user){
+        showText = user;
+    }
+    document.getElementById("currentUser").innerText = "用户：" + showText;
+    
+    if(user || guest){
+        document.getElementById("logoutBtn").style.display = "inline";
+    }
+}
+
+function checkNav(url){
+    let user = localStorage.getItem("loginUser");
+    let guest = localStorage.getItem("guestMode");
+    if(user || guest){
+        go(url);
+        return;
+    }
+    if(confirm("您还未登录，是否前往登录？")){
+        go("login.html");
+    }else{
+        if(confirm("使用游客模式浏览体验更佳，是否开启？")){
+            localStorage.setItem("guestMode","true");
+            go(url);
+        }else{
+            alert("ok");
+            go("login.html");
+        }
+    }
+}
+
+function logout(){
+    if(confirm("是否退出？")){
+        localStorage.removeItem("loginUser");
+        localStorage.removeItem("guestMode");
+        go("login.html");
+    }
+}
+
+function go(url){
+    document.body.style.opacity=0;
+    setTimeout(()=>{location.href=url},300);
+}
+</script>
+</body>
+</html>

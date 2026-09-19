@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>网盘</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif;}
+        body{background:#f0f0f0;transition:opacity 0.3s ease;}
+        .header{background:#fff;padding:15px 30px;display:flex;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+        .logo{font-size:18px;font-weight:bold;color:#409eff;cursor:pointer;}
+        .nav{margin-left:40px;display:flex;gap:25px;}
+        .nav a{text-decoration:none;color:#333;font-size:14px;cursor:pointer;}
+        .nav a.active{color:#409eff;font-weight:bold;}
+        .user{margin-left:auto;font-weight:bold;color:#333;display:flex;align-items:center;gap:12px;}
+        .logout-btn{color:#f56c6c;font-size:14px;cursor:pointer;text-decoration:underline;}
+        .main{display:flex;padding:25px;gap:20px;flex-wrap:wrap;}
+        .sidebar{width:200px;background:#fff;padding:20px;border-radius:8px;}
+        .sidebar h3{margin-bottom:15px;font-size:16px;}
+        .side-menu{list-style:none;}
+        .side-menu li{margin:10px 0;}
+        .side-menu li a{display:block;padding:8px 12px;color:#333;text-decoration:none;font-size:14px;border-radius:4px;cursor:pointer;}
+        .side-menu li a:hover{background:#f0f7ff;color:#409eff;}
+        .content{flex:1;background:#fff;padding:25px;border-radius:8px;min-width:300px;min-height:500px;}
+        #uploadArea{margin-top:20px;}
+        #msg{margin-top:15px;color:green;font-size:14px;}
+
+        .file-item{
+            border:1px solid #ddd;
+            padding:10px 14px;
+            margin-bottom:8px;
+            border-radius:6px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .file-name{font-size:14px;color:#333;}
+        .file-btn button{
+            padding:4px 8px;
+            font-size:12px;
+            margin-left:6px;
+            border:none;
+            border-radius:4px;
+            cursor:pointer;
+        }
+        .folder{background:#fff8e1;color:#f57c00;}
+        .rename{background:#e1f5fe;color:#0277bd;}
+        .download{background:#e8f5e9;color:#2e7d32;}
+        .share{background:#fff3e0;color:#ef6c00;}
+        .delete{background:#ffebee;color:#c62828;}
+        .folder-path{
+            margin:10px 0;
+            padding:8px 12px;
+            background:#f8f9fa;
+            border-radius:4px;
+            font-size:14px;
+            cursor:pointer;
+        }
+
+        /* 管理员面板 - TREE 树形结构 */
+        .admin-modal{
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;
+            z-index:99999;display:none;
+        }
+        .admin-box{
+            background:#fff;width:90%;max-width:1000px;padding:25px;border-radius:10px;
+            max-height:85vh;overflow-y:auto;
+        }
+        .admin-box h2{
+            color:#e74c3c;margin-bottom:15px;text-align:center;
+        }
+        .tree-container {
+            font-family: Consolas, "微软雅黑", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .tree-node {
+            margin-left: 12px;
+        }
+        .tree-folder {
+            cursor: pointer;
+            color: #b56b00;
+            font-weight: bold;
+        }
+        .tree-file {
+            color: #222;
+        }
+        .tree-btn {
+            display: inline-block;
+            margin-left: 8px;
+        }
+        .tree-btn button {
+            padding: 2px 6px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 3px;
+        }
+        .btn-down { background: #e8f5e9; color: #2e7d32; }
+        .btn-rename { background: #e1f5fe; color: #0277bd; }
+        .btn-del { background: #ffebee; color: #c62828; }
+        .tree-line {
+            color: #999;
+        }
+        .admin-close{
+            background:#409eff;margin-top:15px;width:100%;padding:10px;
+            color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="go('index.html')">信息科技课堂平台</div>
+        <div class="nav">
+            <a onclick="checkNav('blog.html')">博客中心</a>
+            <a class="active">网盘</a>
+            <a onclick="checkNav('qa.html')">爱问知识库</a>
+            <a onclick="go('about.html')">关于</a>
+        </div>
+        <div class="user">
+            <span id="currentUser" onclick="openAdminPanel()"></span>
+            <span class="logout-btn" onclick="logout()" id="logoutBtn" style="display:none;">退出</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <h3>网盘</h3>
+            <ul class="side-menu">
+                <li><a id="allFileBtn">全部文件</a></li>
+                <li><a id="globalBtn">全局文件</a></li>
+                <li><a id="myShareBtn">我的分享</a></li>
+                <li><a id="uploadBtn">上传文件</a></li>
+                <li><a id="createFolderBtn" style="color:#f57c00;">📁 新建文件夹</a></li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <h2 id="pageTitle">文件管理</h2>
+            <div id="folderPath" class="folder-path" style="display:none;"></div>
+            <div id="uploadArea" style="display:none;margin-top:20px;">
+                <input type="file" id="fileInput"><br><br>
+                <button onclick="doUpload()">确认上传</button>
+                <div id="msg"></div>
+            </div>
+            <div id="fileList" style="margin-top:20px;"></div>
+        </div>
+    </div>
+
+    <!-- 管理员面板 -->
+    <div id="adminPanel" class="admin-modal">
+        <div class="admin-box">
+            <h2>🔧 管理员后台 - 树形目录（防误删）</h2>
+            <div id="adminContent" class="tree-container"></div>
+            <button class="admin-close" onclick="closeAdminPanel()">关闭面板</button>
+        </div>
+    </div>
+
+<script>
+window.onload=function(){
+    let user = localStorage.getItem("loginUser");
+    let guest = localStorage.getItem("guestMode");
+    let showText = "未登录";
+    if(guest){
+        showText = "游客";
+    }else if(user){
+        showText = user;
+    }
+    document.getElementById("currentUser").innerText = "用户：" + showText;
+    
+    if(user || guest){
+        document.getElementById("logoutBtn").style.display = "inline";
+    }
+}
+
+// ====================== 【GM 树形面板】 ======================
+let treeData = {};
+let expandedFolders = new Set();
+
+function openAdminPanel(){
+    let u = localStorage.getItem("loginUser");
+    if(u !== "admin") return;
+
+    fetch("gm_scan_upload.php")
+    .then(r=>r.json())
+    .then(list=>{
+        treeData = {};
+        list.forEach(item=>{
+            let arr = item.path.split('/').filter(Boolean);
+            let p = treeData;
+            arr.forEach((k,i)=>{
+                if(!p[k]) p[k]={};
+                if(i===arr.length-1) p[k].item=item;
+                p=p[k];
+            });
+        });
+        renderTree();
+        document.getElementById("adminPanel").style.display="flex";
+    });
+}
+
+function renderTree(){
+    let root = document.getElementById("adminContent");
+    root.innerHTML = `<div class="tree-folder" onclick="toggleFolder('')">📂 upload (根目录)</div><div id="tree-root"></div>`;
+    let rootNode = document.getElementById("tree-root");
+    rootNode.innerHTML = buildTreeHtml(treeData, "");
+}
+
+function toggleFolder(path){
+    if(expandedFolders.has(path)) expandedFolders.delete(path);
+    else expandedFolders.add(path);
+    renderTree();
+}
+
+function buildTreeHtml(node, prefix){
+    let html = "";
+    let keys = Object.keys(node).filter(k=>k!=="item");
+    keys.forEach((key,i)=>{
+        let last = i === keys.length-1;
+        let child = node[key];
+        let isDir = !child.item || child.item.type==="dir";
+        let path = prefix ? prefix+"/"+key : key;
+        let linePre = last ? "└── " : "├── ";
+        let icon = isDir ? "📁" : "📄";
+
+        html += `<div class="tree-node">`;
+        html += `<span class="tree-line">${linePre}</span>`;
+
+        if(isDir){
+            let open = expandedFolders.has(path);
+            html += `<span class="tree-folder" onclick="toggleFolder('${path}')">${open?"▾":"▸"} ${icon} ${key}</span>`;
+        }else{
+            let it = child.item;
+            html += `<span class="tree-file">${icon} ${key}</span>`;
+            html += `<span class="tree-btn">
+                <button class="btn-down" onclick="gmDownload('${it.path}')">下载</button>
+                <button class="btn-rename" onclick="gmRename('${it.path}','file')">重命名</button>
+                <button class="btn-del" onclick="gmDelete('${it.path}','file')">删除</button>
+            </span>`;
+        }
+
+        if(isDir && expandedFolders.has(path)){
+            let newPre = prefix ? prefix+"/"+key : key;
+            let childPre = prefix + (last ? "    " : "│   ");
+            html += buildTreeHtml(child, newPre);
+        }
+        html += `</div>`;
+    });
+    return html;
+}
+
+function closeAdminPanel(){
+    document.getElementById("adminPanel").style.display="none";
+}
+
+function gmDownload(p){
+    window.open(`gm_download.php?path=${encodeURIComponent(p)}`);
+}
+
+function gmRename(p,t){
+    let n=prompt("新名称",p.split('/').pop());
+    if(!n)return;
+    fetch(`gm_rename.php?path=${encodeURIComponent(p)}&new=${encodeURIComponent(n)}&type=${t}`)
+    .then(()=>{alert("成功");openAdminPanel();});
+}
+
+function gmDelete(p,t){
+    if(!confirm("⚠️ 确定删除？不可恢复！\n路径："+p)) return;
+    fetch(`gm_delete.php?path=${encodeURIComponent(p)}&type=${t}`)
+    .then(()=>{alert("已删除");openAdminPanel();});
+}
+
+// ====================== 原有功能 ======================
+function checkNav(url){
+    let user = localStorage.getItem("loginUser");
+    let guest = localStorage.getItem("guestMode");
+    if(user || guest){
+        go(url);
+        return;
+    }
+    if(confirm("您还未登录，是否前往登录？")){
+        go("login.html");
+    }else{
+        if(confirm("使用游客模式浏览体验更佳，是否开启？")){
+            localStorage.setItem("guestMode","true");
+            go(url);
+        }else{
+            alert("ok");
+            go("login.html");
+        }
+    }
+}
+
+function logout(){
+    if(confirm("是否退出？")){
+        localStorage.removeItem("loginUser");
+        localStorage.removeItem("guestMode");
+        go("login.html");
+    }
+}
+
+function go(url){
+    document.body.style.opacity=0;
+    setTimeout(()=>{location.href=url},300);
+}
+
+let user = localStorage.getItem("loginUser") || "testuser";
+let currentPath = "";
+
+document.getElementById("createFolderBtn").onclick = function(){
+    let folderName = prompt("输入文件夹名称");
+    if(!folderName) return;
+    fetch(`create_folder.php?user=${user}&path=${encodeURIComponent(currentPath)}&name=${encodeURIComponent(folderName)}`)
+    .then(()=>{
+        alert("创建成功");
+        loadFiles();
+    });
+};
+
+function renameFolder(oldName){
+    let newName = prompt("输入新文件夹名", oldName);
+    if(!newName) return;
+    
+    fetch(`rename_folder.php?user=${user}&path=${encodeURIComponent(currentPath)}&old=${encodeURIComponent(oldName)}&new=${encodeURIComponent(newName)}`)
+    .then(() => {
+        alert("重命名成功！");
+        loadFiles();
+    });
+}
+
+document.getElementById("folderPath").onclick = function(){
+    if(currentPath === "") return;
+    let paths = currentPath.split("/");
+    paths.pop();
+    currentPath = paths.join("/");
+    loadFiles();
+};
+
+document.getElementById("uploadBtn").onclick = function(){
+    document.getElementById("uploadArea").style.display = "block";
+    document.getElementById("pageTitle").innerText = "上传文件";
+    document.getElementById("fileList").innerHTML = "";
+    document.getElementById("folderPath").style.display = "none";
+};
+
+document.getElementById("allFileBtn").onclick = function(){
+    currentPath = "";
+    loadFiles();
+};
+
+function loadFiles(){
+    document.getElementById("uploadArea").style.display = "none";
+    document.getElementById("pageTitle").innerText = currentPath || "我的全部文件";
+    let pathDiv = document.getElementById("folderPath");
+    if(currentPath){
+        pathDiv.innerText = "↩️ 返回上一级 ("+currentPath+")";
+        pathDiv.style.display = "block";
+    }else{
+        pathDiv.style.display = "none";
+    }
+
+    let list = document.getElementById("fileList");
+    list.innerHTML = "加载中...";
+
+    fetch(`filelist.php?user=${user}&path=${encodeURIComponent(currentPath)}`)
+    .then(r=>r.json())
+    .then(files=>{
+        if(files.length===0){list.innerHTML="暂无文件";return;}
+        let html="";
+        files.forEach(f=>{
+            let isFolder = f.type === "dir";
+            html += `
+            <div class="file-item">
+                <div class="file-name" ${isFolder ? 'onclick="enterFolder(\''+f.name+'\')" style="cursor:pointer;color:#f57c00;"' : ''}>
+                    ${isFolder ? '📁 ' : '📄 '}${f.name}
+                </div>
+                <div class="file-btn">
+                    ${isFolder ? 
+                        `<button class="rename" onclick="renameFolder('${f.name}')">重命名</button>` 
+                        : 
+                        `<button class="rename" onclick="rename('${f.name}')">重命名</button>`
+                    }
+                    ${!isFolder ? `<button class="download" onclick="download('${f.name}')">下载</button>` : ''}
+                    ${!isFolder ? `<button class="share" onclick="share('${f.name}')">分享</button>` : ''}
+                    <button class="delete" onclick="${isFolder ? 'deleteFolder(\''+f.name+'\')' : 'deleteMyFile(\''+f.name+'\')'}">删除</button>
+                </div>
+            </div>`;
+        });
+        list.innerHTML=html;
+    });
+}
+
+function enterFolder(folderName){
+    currentPath = currentPath ? currentPath+"/"+folderName : folderName;
+    loadFiles();
+}
+
+document.getElementById("globalBtn").onclick = function(){
+    currentPath = "";
+    document.getElementById("uploadArea").style.display = "none";
+    document.getElementById("folderPath").style.display = "none";
+    document.getElementById("pageTitle").innerText = "全局文件（仅下载）";
+    let list = document.getElementById("fileList");
+    list.innerHTML = "加载中...";
+
+    fetch("global.php")
+    .then(r=>r.json())
+    .then(files=>{
+        if(files.length===0){list.innerHTML="暂无分享文件";return;}
+        let html="";
+        files.forEach(f=>{
+            html+=`
+            <div class="file-item">
+                <div class="file-name">${f}</div>
+                <div class="file-btn">
+                    <button class="download" onclick="globalDownload('${f}')">下载</button>
+                </div>
+            </div>`;
+        });
+        list.innerHTML=html;
+    });
+};
+
+document.getElementById("myShareBtn").onclick = function(){
+    currentPath = "";
+    document.getElementById("uploadArea").style.display = "none";
+    document.getElementById("folderPath").style.display = "none";
+    document.getElementById("pageTitle").innerText = "我的分享（可删除）";
+    let list = document.getElementById("fileList");
+    list.innerHTML = "加载中...";
+
+    fetch("my_share_list.php?user="+user)
+    .then(r=>r.json())
+    .then(files=>{
+        if(files.length===0){list.innerHTML="暂无分享";return;}
+        let html="";
+        files.forEach(f=>{
+            html+=`
+            <div class="file-item">
+                <div class="file-name">${f}</div>
+                <div class="file-btn">
+                    <button class="download" onclick="globalDownload('${f}')">下载</button>
+                    <button class="delete" onclick="delMyShare('${f}')">删除</button>
+                </div>
+            </div>`;
+        });
+        list.innerHTML=html;
+    });
+};
+
+function doUpload(){
+    let inp=document.getElementById("fileInput");
+    if(!inp.files[0]){document.getElementById("msg").innerText="请选择文件";return;}
+    let fd=new FormData();
+    fd.append("file",inp.files[0]);
+    let xhr=new XMLHttpRequest();
+    xhr.open("POST",`upload.php?user=${user}&path=${encodeURIComponent(currentPath)}`);
+    xhr.send(fd);
+    xhr.onload=()=>{
+        document.getElementById("msg").innerText="上传成功："+inp.files[0].name;
+    };
+}
+
+function download(filename){
+    window.open(`download.php?type=user&user=${user}&path=${encodeURIComponent(currentPath)}&file=${encodeURIComponent(filename)}`);
+}
+
+function globalDownload(filename){
+    window.open(`download.php?type=global&file=${encodeURIComponent(filename)}`);
+}
+
+function rename(old){
+    let n=prompt("新文件名",old);
+    if(!n)return;
+    fetch(`rename.php?user=${user}&path=${encodeURIComponent(currentPath)}&old=${encodeURIComponent(old)}&new=${encodeURIComponent(n)}`)
+    .then(()=>alert("修改成功"))
+    .then(()=>loadFiles());
+}
+
+function share(filename){
+    fetch(`share.php?user=${user}&path=${encodeURIComponent(currentPath)}&file=${encodeURIComponent(filename)}`)
+    .then(()=>alert("分享成功！"));
+}
+
+function deleteMyFile(filename){
+    if(!confirm("确定删除此文件？删除后不可恢复！")) return;
+    fetch(`delete_my_file.php?user=${user}&path=${encodeURIComponent(currentPath)}&file=${encodeURIComponent(filename)}`)
+    .then(()=>alert("删除成功"))
+    .then(()=>loadFiles());
+}
+
+function deleteFolder(folderName){
+    if(!confirm("确定删除文件夹？里面的文件会一起删除！")) return;
+    fetch(`delete_folder.php?user=${user}&path=${encodeURIComponent(currentPath)}&name=${encodeURIComponent(folderName)}`)
+    .then(()=>alert("删除成功"))
+    .then(()=>loadFiles());
+}
+
+function delMyShare(filename){
+    if(!confirm("确定删除分享？")) return;
+    fetch(`delete_my_share.php?user=${user}&file=${encodeURIComponent(filename)}`)
+    .then(()=>alert("已删除分享"))
+    .then(()=>document.getElementById("myShareBtn").click());
+}
+</script>
+</body>
+</html>

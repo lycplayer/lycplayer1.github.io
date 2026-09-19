@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>易考</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            transition: opacity 0.3s ease;
+        }
+        .login-top-bar, .login-bottom-bar {
+            width: 100%;
+            height: 80px;
+            background-color: #f0f0f0;
+        }
+        .login-middle {
+            width: 100%;
+            background-color: #f2f2f2;
+            padding: 40px 0;
+            text-align: center;
+        }
+        .login-title-top {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .login-title-main {
+            font-size: 52px;
+            color: #2c3e50;
+            margin-bottom: 50px;
+        }
+        .login-form {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group label {
+            font-size: 14px;
+            color: #555;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 150px;
+            font-size: 14px;
+        }
+        .login-btn {
+            padding: 6px 18px;
+            background-color: #409eff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .guest-btn {
+            padding: 6px 18px;
+            background-color: #666;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-top-bar"></div>
+    <div class="login-middle">
+        <div class="login-title-top">易考</div>
+        <div class="login-title-main">信息科技答题网页</div>
+        <div class="login-form">
+            <div class="form-group">
+                <label>平台账户:</label>
+                <input type="text" id="username" placeholder="admin">
+            </div>
+            <div class="form-group">
+                <label>登入密码:</label>
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+                <label>登入考试:</label>
+                <select id="exam-select">
+                    <option value="">请选择考试</option>
+                    <option value="123">123</option>
+                </select>
+            </div>
+            <button class="login-btn" onclick="login()">登入</button>
+            <button class="guest-btn" onclick="guestLogin()">游客模式</button>
+        </div>
+    </div>
+    <div class="login-bottom-bar"></div>
+
+<script>
+// 生成 241601 ~ 241649，密码同用户名
+let userList = {
+    "admin": "admin"
+};
+for (let i = 241601; i <= 241649; i++) {
+    userList[i] = i.toString();
+}
+
+// 登录
+function login() {
+    let u = document.getElementById("username").value.trim();
+    let p = document.getElementById("password").value.trim();
+    let e = document.getElementById("exam-select").value;
+
+    if (userList[u] && userList[u] === p && e === "123") {
+        localStorage.setItem("loginUser", u);
+        localStorage.removeItem("guestMode");
+        alert("登录成功！欢迎：" + u);
+        document.body.style.opacity = 0;
+        setTimeout(() => location.href = "index.html", 300);
+    } else {
+        alert("账号、密码或考试错误");
+    }
+}
+
+// 游客模式
+function guestLogin() {
+    localStorage.setItem("guestMode", "true");
+    localStorage.removeItem("loginUser");
+    document.body.style.opacity = 0;
+    setTimeout(() => location.href = "index.html", 300);
+}
+</script>
+</body>
+</html>
